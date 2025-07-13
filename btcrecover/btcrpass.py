@@ -33,12 +33,14 @@ __version__          =  "0.17.10"
 __ordering_version__ = b"0.6.4"  # must be updated whenever password ordering changes
 
 import sys, argparse, itertools, string, re, multiprocessing, signal, os, gc, \
-       time, timeit, hashlib, collections, base64, struct, atexit, zlib, math, json, numbers, io
+       time, timeit, hashlib, collections, base64, struct, atexit, zlib, math, json, numbers, io, binascii
 import pickle
 
-# The progressbar module is recommended but optional; it is typically
-# distributed with btcrecover (it is loaded later on demand)
-
+# 兼容 Python2/3 的 tstr 定义
+if sys.version_info[0] < 3:
+    tstr = unicode
+else:
+    tstr = str
 
 def full_version():
     from struct import calcsize
@@ -199,7 +201,10 @@ def load_wallet(wallet_filename):
     for wallet_type in wallet_types:
         with open(wallet_filename, "rb") as wallet_file:
             wallet_file.seek(0)
-            found = wallet_type.is_wallet_file(wallet_file)
+            try:
+                found = wallet_type.is_wallet_file(wallet_file)
+            except Exception:
+                found = False
             if found:
                 wallet_file.seek(0)
                 return wallet_type.load_from_filename(wallet_filename)
@@ -789,14 +794,30 @@ class WalletBitcoinCore(object):
             passwords = map(lambda p: p.encode("utf_8", "ignore"), passwords)
 
         for count, password in enumerate(passwords, 1):
+            # Ensure password is bytes and salt is bytes
+            if isinstance(password, str):
+                password = password.encode("utf_8", "ignore")
+            
             derived_key = password + self._salt
+            
+            # Ensure derived_key stays as bytes throughout all iterations
             for i in range(self._iter_count):
                 derived_key = l_sha512(derived_key).digest()
-            part_master_key = aes256_cbc_decrypt(derived_key[:32], self._part_encrypted_master_key[:16], self._part_encrypted_master_key[16:])
-            #
-            # If the last block (bytes 16-31) of part_encrypted_master_key is all padding, we've found it
-            if part_master_key == b"\x10\x10\x10\x10\x10\x10\x10\x10\x10\x10\x10\x10\x10\x10\x10\x10":
-                return password if tstr == str else password.decode("utf_8", "replace"), count
+            
+            # Extract AES key and decrypt
+            aes_key = derived_key[:32]
+            iv = self._part_encrypted_master_key[:16]
+            ciphertext = self._part_encrypted_master_key[16:]
+            
+            try:
+                part_master_key = aes256_cbc_decrypt(aes_key, iv, ciphertext)
+                #
+                # If the last block (bytes 16-31) of part_encrypted_master_key is all padding, we've found it
+                if part_master_key == b"\x10\x10\x10\x10\x10\x10\x10\x10\x10\x10\x10\x10\x10\x10\x10\x10":
+                    return password if tstr == str else password.decode("utf_8", "replace"), count
+            except Exception:
+                # If decryption fails, continue to next password
+                continue
 
         return False, count
 
@@ -1004,7 +1025,7 @@ class WalletMultiBit(object):
     def is_wallet_file(wallet_file):
         wallet_file.seek(0)
         try:   data = base64.b64decode(wallet_file.read(20).lstrip()[:12])
-        except TypeError: return False
+        except (TypeError, binascii.Error): return False
         return data.startswith(b"Salted__")
 
     def __init__(self, loading = False):
@@ -2466,7 +2487,7 @@ def load_aes256_library(force_purepython = False, warnings = True):
             plaintext = bytearray()
             for i in range(0, len(ciphertext), 16):
                 plaintext.extend( stream_cipher.decrypt_block(bytearray(ciphertext[i:i+16])) )  # input must be a list
-            return str(plaintext)
+            return bytes(plaintext)  # 返回字节串而不是字符串
         return aes256_decrypt
     aes256_cbc_decrypt = aes256_decrypt_factory(aespython.CBCMode)
     aes256_ofb_decrypt = aes256_decrypt_factory(aespython.OFBMode)
