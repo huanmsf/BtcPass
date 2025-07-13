@@ -1,66 +1,113 @@
-# *btcrecover* [![Build Status](https://travis-ci.org/gurnec/btcrecover.svg?branch=master)](https://travis-ci.org/gurnec/btcrecover) ![license](https://img.shields.io/badge/license-GPLv2-blue.svg) #
+# BtcPass - 比特币钱包密码恢复工具
 
-*btcrecover* is an open source Bitcoin wallet password and seed recovery tool. It is designed for the case where you already know most of your password or seed, but need assistance in trying different possible combinations.
+一个开源的比特币钱包密码和种子恢复工具，专为 Python 3.11+ 优化。
 
+## 快速开始
 
-## Quick Start ##
+### 基本用法
+```bash
+# 恢复钱包密码
+python btcrecover.py --wallet 你的钱包文件 --passwordlist 密码字典.txt
 
-To try recovering your password, please start with the **[Password Recovery Quick Start](TUTORIAL.md#btcrecover-tutorial)**.
+# 示例：恢复 Electrum 钱包密码
+python btcrecover.py --wallet wallet.dat --passwordlist pass.txt --utf8
+```
 
-If you mostly know your recovery seed/mnemonic (12-24 recovery words), but think there may be a mistake in it, please see the **[Seed Recovery Quick Start](docs/Seedrecover_Quick_Start_Guide.md)**.
+### 支持的钱包类型
+- **Bitcoin Core** - 比特币核心钱包
+- **Electrum** - 电子钱包 (1.x, 2.x, 4.x)
+- **Armory** - 军械库钱包
+- **MultiBit** - 多重比特钱包
+- **Blockchain.info** - 区块链钱包
+- **BIP-39** - 标准助记词钱包 (TREZOR, Ledger 等)
+- **Android 比特币钱包** - 安卓比特币钱包
+- **Bither** - 比太钱包
 
-If you find *btcrecover* helpful, please consider a small donation:
-**[3Au8ZodNHPei7MQiSVAWb7NB2yqsb48GW4](bitcoin:3Au8ZodNHPei7MQiSVAWb7NB2yqsb48GW4?label=btcrecover)**
+## 核心功能
 
-**Thank You!**
+### 🔐 密码恢复
+- 支持多种加密算法 (PBKDF2, scrypt, AES 等)
+- 多线程并行破解，提高效率
+- 支持 Unicode 密码和特殊字符
+- 自动保存找到的密码到 `result_found.txt`
 
+### 🎯 智能匹配
+- 支持通配符扩展 (`%d` 数字, `%l` 小写字母等)
+- 拼写错误模拟 (大小写、字符替换、插入等)
+- 正则表达式过滤
+- 进度条和剩余时间显示
 
-## Features ##
+### 🛡️ 安全特性
+- 离线模式 - 只提取必要信息，不暴露私钥
+- 可中断和恢复 - 自动保存进度
+- 支持 GPU 加速 (实验性)
 
- * Bitcoin wallet password recovery support for:
-     * [Armory](https://btcarmory.com/)
-     * [Bitcoin Unlimited](https://www.bitcoinunlimited.info/)/[Classic](https://bitcoinclassic.com/)/[XT](https://bitcoinxt.software/)/[Core](https://bitcoincore.org/)
-     * [MultiBit HD](https://multibit.org/) and [MultiBit Classic](https://multibit.org/help/v0.5/help_contents.html)
-     * [Electrum](https://electrum.org/) (1.x and 2.x)
-     * Most wallets based on [bitcoinj](https://bitcoinj.github.io/), including [Hive for OS X](https://github.com/hivewallet/hive-mac/wiki/FAQ)
-     * BIP-39 passphrases, Bitcoin & Ethereum supported (e.g. [TREZOR](https://www.bitcointrezor.com/) & [Ledger](https://www.ledgerwallet.com/) passphrases)
-     * [mSIGNA (CoinVault)](https://ciphrex.com/products/)
-     * [Blockchain.info](https://blockchain.info/wallet)
-     * [pywallet --dumpwallet](https://github.com/jackjack-jj/pywallet) of Bitcoin Unlimited/Classic/XT/Core wallets
-     * [Bitcoin Wallet for Android/BlackBerry](https://play.google.com/store/apps/details?id=de.schildbach.wallet) spending PINs and encrypted backups
-     * [KnC Wallet for Android](https://github.com/kncgroup/bitcoin-wallet) encrypted backups
-     * [Bither](https://bither.net/)
- * Altcoin password support for most wallets derived from one of those above, including:
-     * [Litecoin Core](https://litecoin.org/)
-     * [Electrum-LTC](https://electrum-ltc.org/)
-     * [Litecoin Wallet for Android](https://litecoin.org/) encrypted backups
-     * [Dogecoin Core](http://dogecoin.com/)
-     * [MultiDoge](http://multidoge.org/)
-     * [Dogecoin Wallet for Android](http://dogecoin.com/) encrypted backups
- * Bitcoin & Ethereum seed recovery support for:
-     * [Electrum](https://electrum.org/) (1.x and 2.x, plus wallet file loading support)
-     * BIP-32/39 compliant wallets ([bitcoinj](https://bitcoinj.github.io/)), including:
-         * [MultiBit HD](https://multibit.org/)
-         * [Bitcoin Wallet for Android/BlackBerry](https://play.google.com/store/apps/details?id=de.schildbach.wallet) (with seeds previously extracted by [decrypt\_bitcoinj\_seeds](https://github.com/gurnec/decrypt_bitcoinj_seed))
-         * [Hive for Android](https://play.google.com/store/apps/details?id=com.hivewallet.hive.cordova), [for iOS](https://github.com/hivewallet/hive-ios), and [Hive Web](https://hivewallet.com/)
-         * [breadwallet for iOS](https://breadwallet.com/)
-     * BIP-32/39/44 Bitcoin & Ethereum compliant wallets, including:
-         * [Mycelium for Android](https://wallet.mycelium.com/)
-         * [TREZOR](https://www.bitcointrezor.com/)
-         * [Ledger](https://www.ledgerwallet.com/)
-         * [Jaxx](https://jaxx.io/)
-         * [MyEtherWallet](https://www.myetherwallet.com/)
-         * [Bither](https://bither.net/)
-         * [Blockchain.info](https://blockchain.info/wallet)
- * [Free and Open Source](http://en.wikipedia.org/wiki/Free_and_open-source_software) - anyone can download, inspect, use, and redistribute this software
- * Supported on Windows, Linux, and OS X
- * Support for Unicode passwords and seeds
- * Multithreaded searches, with user-selectable thread count
- * Experimental [GPU acceleration](docs/GPU_Acceleration.md) for Bitcoin Unlimited/Classic/XT/Core, Armory, and derived altcoin wallets
- * Wildcard expansion for passwords
- * Typo simulation for passwords and seeds
- * Progress bar and ETA display (at the command line)
- * Optional autosave - interrupt and continue password recoveries without losing progress
- * Automated seed recovery with a simple graphical user interface
- * “Offline” mode for nearly all supported wallets - use one of the [extract scripts (click for more information)](docs/Extract_Scripts.md) to extract just enough information to attempt password recovery, without giving *btcrecover* or whoever runs it access to *any* of the addresses or private keys in your Bitcoin wallet.
- * “Nearly offline” mode for Armory - use an [extract script (click for more information)](docs/Extract_Scripts.md) to extract a single private key for attempting password recovery. *btcrecover* and whoever runs it will only have access to this one address/private key from your Bitcoin wallet (read the link above for an important caveat).
+## 安装要求
+
+- Python 3.11 或更高版本
+- 可选依赖：
+  - `coincurve` - 用于 Electrum 4.x 钱包
+  - `pylibscrypt` - 用于 scrypt 算法
+  - `pyopencl` - 用于 GPU 加速
+
+### 安装依赖
+```bash
+pip install coincurve pylibscrypt pyopencl
+```
+
+## 使用示例
+
+### 1. 恢复 Electrum 钱包密码
+```bash
+python btcrecover.py --wallet electrum_wallet --passwordlist rockyou.txt --utf8
+```
+
+### 2. 使用自定义密码列表
+```bash
+python btcrecover.py --wallet wallet.dat --passwordlist my_passwords.txt
+```
+
+### 3. 多线程加速
+```bash
+python btcrecover.py --wallet wallet.dat --passwordlist pass.txt --threads 8
+```
+
+### 4. 模拟拼写错误
+```bash
+python btcrecover.py --wallet wallet.dat --passwordlist pass.txt --typos 2 --typos-swap --typos-capslock
+```
+
+## 输出结果
+
+找到密码时，程序会显示：
+```
+==============================
+成功找到密码：'your_password'
+==============================
+```
+
+同时自动保存到 `result_found.txt`：
+```
+钱包文件: wallet.dat
+密码: your_password
+```
+
+## 注意事项
+
+- 大文件 (如 `rockyou.txt`) 已被 `.gitignore` 排除
+- 建议使用较小的密码字典进行测试
+- 确保钱包文件路径正确
+- 某些钱包类型可能需要额外依赖
+
+## 许可证
+
+GPL v2 - 开源软件，可自由使用和修改
+
+## 致谢
+
+感谢原项目 [btcrecover](https://github.com/gurnec/btcrecover) 的贡献者。
+
+---
+
+**如果这个工具对你有帮助，请考虑小额捐赠：**
+`3Au8ZodNHPei7MQiSVAWb7NB2yqsb48GW4`
