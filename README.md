@@ -67,12 +67,24 @@ python btcrecover.py --wallet electrum_wallet --passwordlist rockyou.txt --utf8
 python btcrecover.py --wallet wallet.dat --passwordlist my_passwords.txt
 ```
 
-### 3. 多线程加速
+### 3. 多线程CPU加速破解
 ```bash
 python btcrecover.py --wallet wallet.dat --passwordlist pass.txt --threads 8
 ```
+- `--threads 8` 指定使用8个CPU线程（根据CPU核心数调整）
+- 默认自动使用多线程，适合绝大多数用户
 
-### 4. 模拟拼写错误
+### 4. 启用GPU加速破解（实验性）
+```bash
+python btcrecover.py --wallet wallet.dat --passwordlist pass.txt --enable-gpu --global-ws 512 --local-ws 64
+```
+- `--enable-gpu` 启用OpenCL GPU加速（仅支持部分钱包类型，如Bitcoin Core）
+- `--global-ws` 设置全局工作组大小（推荐512~4096，需为local-ws整数倍）
+- `--local-ws` 设置本地工作组大小（推荐64/128/256，具体取决于显卡）
+- 如遇报错可尝试调整参数，如`--local-ws 256`、`--global-ws 1024`
+- GPU加速对驱动、依赖和硬件要求较高，部分服务器GPU（如Tesla V100）可能不兼容
+
+### 5. 模拟拼写错误
 ```bash
 python btcrecover.py --wallet wallet.dat --passwordlist pass.txt --typos 2 --typos-swap --typos-capslock
 ```
@@ -98,6 +110,8 @@ python btcrecover.py --wallet wallet.dat --passwordlist pass.txt --typos 2 --typ
 - 建议使用较小的密码字典进行测试
 - 确保钱包文件路径正确
 - 某些钱包类型可能需要额外依赖
+- **GPU加速为实验性功能，推荐优先使用CPU多线程模式**
+- GPU模式如遇崩溃或找不到密码，请切换回CPU多线程
 
 ## 许可证
 
