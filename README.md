@@ -124,4 +124,4 @@ GPL v2 - 开源软件，可自由使用和修改
 ---
 
 **如果这个工具对你有帮助，请考虑小额捐赠：**
-`3Au8ZodNHPei7MQiSVAWb7NB2yqsb48GW4`
+`bc1qj930pd7u93qlftx6gf33zsd07wlp220q258v38`
