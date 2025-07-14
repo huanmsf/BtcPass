@@ -1,0 +1,17 @@
+# BtcPass GUI 依赖包
+# 基础依赖（GUI必需）
+tkinter  # 通常随Python安装，无需单独安装
+
+# 可选依赖（用于GPU加速）
+pyopencl>=2022.1  # GPU加速支持
+numpy>=1.21.0     # 数值计算支持
+
+# 可选依赖（用于特定钱包类型）
+coincurve>=15.0.0     # Electrum 4.x 钱包支持
+pylibscrypt>=1.7.1    # scrypt 算法支持
+
+# 可选依赖（用于进度显示）
+progressbar2>=4.0.0   # 进度条显示
+
+# 开发依赖（可选）
+argcomplete>=2.0.0    # 命令行自动补全 

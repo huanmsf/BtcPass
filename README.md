@@ -4,7 +4,16 @@
 
 ## 快速开始
 
-### 基本用法
+### GUI界面（推荐）
+```bash
+# 启动GUI启动器
+python start_gui.py
+
+# 或直接启动GUI版本
+python btcrecover_gui_simple.py
+```
+
+### 命令行基本用法
 ```bash
 # 恢复钱包密码
 python btcrecover.py --wallet 你的钱包文件 --passwordlist 密码字典.txt
@@ -104,6 +113,28 @@ python btcrecover.py --wallet wallet.dat --passwordlist pass.txt --typos 2 --typ
 密码: your_password
 ```
 
+## GUI功能特性
+
+### 🖥️ 图形界面
+- **GUI版本**：完整的图形用户界面，支持所有核心功能
+- **启动器**：统一入口，可选择GUI版本或命令行版本
+
+### 🎯 核心功能
+- 钱包文件选择（支持拖拽）
+- 密码字典文件选择
+- 钱包类型自动检测/手动选择
+- CPU线程数调节
+- GPU加速选项（实验性）
+- 实时运行日志显示
+- 进度条和状态显示
+
+### ⚙️ 高级选项
+- UTF-8模式支持中文密码
+- 跳过密码数设置
+- 最大运行时间限制
+- GPU参数调节
+- 自动保存结果
+
 ## 注意事项
 
 - 大文件 (如 `rockyou.txt`) 已被 `.gitignore` 排除
@@ -112,6 +143,7 @@ python btcrecover.py --wallet wallet.dat --passwordlist pass.txt --typos 2 --typ
 - 某些钱包类型可能需要额外依赖
 - **GPU加速为实验性功能，推荐优先使用CPU多线程模式**
 - GPU模式如遇崩溃或找不到密码，请切换回CPU多线程
+- **首次使用建议选择GUI版本进行测试**
 
 ## 许可证
 
