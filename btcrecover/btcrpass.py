@@ -246,8 +246,8 @@ def get_opencl_devices():
     if cl_devices_avail is None:
         try:
             import pyopencl, numpy
-            cl_devices_avail = filter(lambda d: d.available==1 and d.profile=="FULL_PROFILE" and d.endian_little==1,
-                itertools.chain(*[p.get_devices() for p in pyopencl.get_platforms()]))
+            cl_devices_avail = list(filter(lambda d: d.available==1 and d.profile=="FULL_PROFILE" and d.endian_little==1,
+                itertools.chain(*[p.get_devices() for p in pyopencl.get_platforms()])))
         except ImportError as e:
             print(prog+": warning:", e, file=sys.stderr)
             cl_devices_avail = []
@@ -492,9 +492,19 @@ class WalletArmory(object):
         salt  = self._kdf.getSalt().toBinStr()
         assert len(salt) == 32
         with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "romix-ar-kernel.cl")) as opencl_file:
-            cl_program = pyopencl.Program(cl_context, opencl_file.read()).build(
-                b"-w -D SAVE_EVERY={}U -D V_LEN={}U -D SALT0=0x{:016x}UL -D SALT1=0x{:016x}UL -D SALT2=0x{:016x}UL -D SALT3=0x{:016x}UL" \
-                .format(save_every, v_len, *struct.unpack(b">4Q", salt)))
+            build_opts = (
+                "-w "
+                "-D SAVE_EVERY={}U "
+                "-D V_LEN={}U "
+                "-D SALT0=0x{:016x}UL "
+                "-D SALT1=0x{:016x}UL "
+                "-D SALT2=0x{:016x}UL "
+                "-D SALT3=0x{:016x}UL"
+            ).format(save_every, v_len, *struct.unpack(b">4Q", salt))
+            print("DEBUG build_opts:", build_opts, type(build_opts))
+            print("DEBUG options:", [build_opts], [type(x) for x in [build_opts]])
+            assert isinstance(build_opts, str), f"build_opts 类型错误: {type(build_opts)}"
+            cl_program = pyopencl.Program(cl_context, opencl_file.read()).build(options=[build_opts])
         #
         # Configure and store for later the OpenCL kernels (the entrance functions)
         self._cl_kernel_fill = cl_program.kernel_fill_V    # this kernel is executed first
@@ -791,7 +801,7 @@ class WalletBitcoinCore(object):
 
         # Convert Unicode strings (lazily) to UTF-8 bytestrings
         if tstr == str:
-            passwords = map(lambda p: p.encode("utf_8", "ignore"), passwords)
+            passwords = list(map(lambda p: p.encode("utf_8", "ignore"), passwords))
 
         for count, password in enumerate(passwords, 1):
             # Ensure password is bytes and salt is bytes
@@ -841,7 +851,7 @@ class WalletBitcoinCore(object):
         # Load and compile the OpenCL program
         cl_program = pyopencl.Program(cl_context, open(
             os.path.join(os.path.dirname(os.path.realpath(__file__)), "sha512-bc-kernel.cl"))
-            .read()).build(b"-w")
+            .read()).build(options=["-w"])
         #
         # Configure and store for later the OpenCL kernel (the entrance function)
         self._cl_kernel = cl_program.kernel_sha512_bc
@@ -875,7 +885,7 @@ class WalletBitcoinCore(object):
 
         # Convert Unicode strings to UTF-8 bytestrings
         if tstr == str:
-            passwords = map(lambda p: p.encode("utf_8", "ignore"), passwords)
+            passwords = list(map(lambda p: p.encode("utf_8", "ignore"), passwords))
 
         # The first iter_count iteration is done by the CPU
         hashes = numpy.empty([sum(self._cl_global_ws), 64], numpy.uint8)
@@ -2097,7 +2107,7 @@ class WalletBlockchainSecondpass(WalletBlockchain):
                 key = pbkdf2_hmac(b"sha1", password, salt_and_iv, iter_count, 32)
                 decrypted = aes256_cbc_decrypt(key, salt_and_iv, data)    # CBC mode
                 padding   = ord(decrypted[-1:])                           # ISO 10126 padding length
-                return decrypted[:-padding] if 1 <= padding <= 16 and re.match(b'{\s*"guid"', decrypted) else None
+                return decrypted[:-padding] if 1 <= padding <= 16 and re.match(b'{\\s*"guid"', decrypted) else None
             #
             # Encryption scheme only used in version 0.0 wallets (N.B. this is untested)
             def decrypt_old():
@@ -2106,7 +2116,7 @@ class WalletBlockchainSecondpass(WalletBlockchain):
                 # The 16-byte last block, reversed, with all but the first byte of ISO 7816-4 padding removed:
                 last_block = tuple(itertools.dropwhile(lambda x: x==b"\0", decrypted[:15:-1]))
                 padding    = 17 - len(last_block)                         # ISO 7816-4 padding length
-                return decrypted[:-padding] if 1 <= padding <= 16 and decrypted[-padding] == b"\x80" and re.match(b'{\s*"guid"', decrypted) else None
+                return decrypted[:-padding] if 1 <= padding <= 16 and decrypted[-padding] == b"\x80" and re.match(b'{\\s*"guid"', decrypted) else None
             #
             if iter_count:  # v2.0 wallets have a single possible encryption scheme
                 data = decrypt_current(iter_count)
@@ -3132,7 +3142,7 @@ def parse_arguments(effective_argv, wallet = None, base_iterator = None,
         if tokenlist_file and tokenlist_file.peek() == b"#": # if it's either a comment or additional args
             first_line = tokenlist_file.readline()
             tokenlist_first_line_num = 2                     # need to pass this to parse_token_list
-            if re.match(b"#\s*--", first_line, re.UNICODE):  # if it's additional args, not just a comment
+            if re.match(b"#\\s*--", first_line, re.UNICODE):  # if it's additional args, not just a comment
                 print(prog+": warning: all options loaded from restore file; ignoring options in tokenlist file '"+tokenlist_file.name+b"'", file=sys.stderr)
         print("Using autosave file '"+restore_filename+"'")
         args.skip = savestate[b"skip"]  # override this with the most recent value
@@ -3974,7 +3984,7 @@ def parse_tokenlist(tokenlist_file, first_line_num = 1):
 
         # Ignore comments
         if line.startswith(b"#"):
-            if re.match(b"#\s*--", line, re.UNICODE):
+            if re.match(b"#\\s*--", line, re.UNICODE):
                 print(prog+": warning: all options must be on the first line, ignoring options on line", str(line_num), file=sys.stderr)
             continue
 
