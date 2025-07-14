@@ -14,7 +14,7 @@ python btcrecover.py --wallet wallet.dat --passwordlist pass.txt --utf8
 ```
 
 ### 支持的钱包类型
-- **Bitcoin Core** - 比特币核心钱包
+- **Bitcoin Core** - 比特币核心钱包 仅适用0.13.x版本客户端生成的xx.dat钱包文件，新版本的不支持（123456.dat支持，huanmsf.dat不支持）
 - **Electrum** - 电子钱包 (1.x, 2.x, 4.x)
 - **Armory** - 军械库钱包
 - **MultiBit** - 多重比特钱包
